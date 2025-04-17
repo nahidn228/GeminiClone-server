@@ -31,7 +31,11 @@ async function run() {
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
 
-    app.get("/test-ai", async (req, res) => {
+    const database = client.db("geminiClone");
+
+    const geminiCollection = database.collection("gemini");
+
+    app.post("/test-ai", async (req, res) => {
       const prompt = req.query?.prompt;
       if (!prompt) {
         res.send({ msg: "please write a prompt" });
@@ -44,9 +48,20 @@ async function run() {
             "You are a cat. Your name is Nime. Nahid Hasan created you",
         },
       });
-      console.log(response.text);
+      const reply = response?.text;
+      console.log(reply);
 
-      res.send({ reply: response.text });
+      const data = {
+        prompt,
+        reply,
+      };
+      const result = await geminiCollection.insertOne(data);
+
+      res.send(result);
+    });
+    app.get("/response-ai", async (req, res) => {
+      const result = await geminiCollection.find().toArray();
+      res.send(result);
     });
 
     app.get("/", (req, res) => {
